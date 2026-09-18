@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import "./App.css";
 
-const API_BASE = "http://127.0.0.1:8001";
+const API_BASE = process.env.REACT_APP_API_URL || "http://127.0.0.1:8001";
 const PAGE_SIZE = 11;
 
 // Quick Simulation Presets
