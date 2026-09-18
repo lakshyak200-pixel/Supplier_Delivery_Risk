@@ -1,5 +1,7 @@
+import os
 import joblib
 import pandas as pd
+import imblearn  # Required to unpickle imblearn.pipeline.Pipeline
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -15,9 +17,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load artifacts
-model = joblib.load("supplier_delivery_risk_model.pkl")
-orders_df = pd.read_csv("../data/supplier_risk_predictions.csv")
+# Robust artifact path resolution
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+MODEL_PATH = os.path.join(BASE_DIR, "supplier_delivery_risk_model.pkl")
+if not os.path.exists(MODEL_PATH):
+    MODEL_PATH = "supplier_delivery_risk_model.pkl"
+
+DATA_PATH = os.path.join(BASE_DIR, "..", "data", "supplier_risk_predictions.csv")
+if not os.path.exists(DATA_PATH):
+    DATA_PATH = os.path.join(BASE_DIR, "data", "supplier_risk_predictions.csv")
+if not os.path.exists(DATA_PATH):
+    DATA_PATH = "data/supplier_risk_predictions.csv"
+
+model = joblib.load(MODEL_PATH)
+orders_df = pd.read_csv(DATA_PATH)
+
+
+@app.get("/")
+def health_check():
+    """Health check endpoint for Render monitoring."""
+    return {"status": "healthy", "service": "VORTEX Risk API", "orders_loaded": len(orders_df)}
 
 
 class OrderFeatures(BaseModel):
